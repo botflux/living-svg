@@ -243,7 +243,15 @@ class PathAnimator {
         this.pathGenerator = pathHandler
         this.pathHandler = pathHandler
         this.pathInjector = pathInjector
-        this.animate()
+
+        pathHandler.addOnPathFinished(_ => {
+            if (!this.stopAnimation) {
+                let rand = pathGenerator.getRandomPath()
+                pathHandler.startNewPath(rand)
+            }
+        })
+
+        this.start()
     }
 
     /**
@@ -252,31 +260,41 @@ class PathAnimator {
     animate () {
         this.pathInjector.setPath(PathVirtualizer.stringify(this.pathHandler.getActualPath()))
 
-        requestAnimationFrame(this.animate.bind(this))
+        if (!this.stopAnimation) {
+            requestAnimationFrame(this.animate.bind(this))
+        }
+    }
+
+    start () {
+        this.stopAnimationtop = false
+
+        this.animate()
+    }
+
+    stop () {
+        this.stopAnimation = true
     }
 }
 
 const pathInjector = new PathInjector(document.querySelector('[path]'))
 
 const virtualizedPath = PathVirtualizer.parse(pathInjector.getPath())
-virtualizedPath[1] = {...virtualizedPath[1], ...{mode: 'dynamic', interval: 10}}
-virtualizedPath[2] = {...virtualizedPath[2], ...{mode: 'dynamic', interval: 5}}
-
-console.log(virtualizedPath)
+virtualizedPath[1] = {...virtualizedPath[1], ...{mode: 'dynamic', interval: 2}}
+virtualizedPath[2] = {...virtualizedPath[2], ...{mode: 'dynamic', interval: 2}}
+virtualizedPath[3] = {...virtualizedPath[3], ...{mode: 'dynamic', interval: 2}}
+virtualizedPath[4] = {...virtualizedPath[4], ...{mode: 'dynamic', interval: 2}}
 
 const pathHandler = new PathHandler(
     virtualizedPath,
     3000
 )
 
-pathHandler.addOnPathFinished(_ => {
-    console.log('finished')
-    let rand = pathGenerator.getRandomPath()
-    pathHandler.startNewPath(rand)
-    console.log(rand)
-})
-
 pathHandler.startNewPath(virtualizedPath)
 
 const pathGenerator = new PathGenerator(virtualizedPath)
 const pathAnimator = new PathAnimator(pathHandler, pathGenerator, pathInjector)
+
+setTimeout(_ => {
+    pathAnimator.stop()
+    console.log('stopped')
+}, 1500)
